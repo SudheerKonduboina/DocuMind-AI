@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: ai-doc-qa-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_tmp:/var/tmp/nginx
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: ai-doc-qa-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_doc_qa
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-doc-qa-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-doc-qa-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ai_doc_qa
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key}
+      XAI_API_KEY: ${XAI_API_KEY}
+      XAI_BASE_URL: ${XAI_BASE_URL:-https://api.x.ai/v1}
+      MODEL_NAME: ${MODEL_NAME:-grok-2-latest}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: us-east-1
+      AWS_S3_BUCKET: ai-doc-qa-files
+      FAISS_INDEX_PATH: /app/data/faiss_index
+    volumes:
+      - backend_data:/app/data
+      - faiss_index:/app/data/faiss_index
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        python -m database.init_db &&
+        uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+      "
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-doc-qa-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - nginx
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+  backend_data:
+  faiss_index:
+  nginx_cache:
+  nginx_tmp:
+
+networks:
+  app-network:
+    driver: bridge
