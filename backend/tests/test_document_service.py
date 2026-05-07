@@ -112,6 +112,128 @@ async def test_delete_document_not_found(service):
     assert excinfo.value.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_upload_document_audio(service, monkeypatch):
+    mock_s3 = AsyncMock()
+    monkeypatch.setattr("backend.modules.document.document_service.s3_service", mock_s3)
+
+    now = datetime.now()
+    doc_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+
+    mock_doc = MagicMock()
+    mock_doc.id = doc_id
+    mock_doc.title = "test.mp3"
+    mock_doc.file_type = "audio"
+    mock_doc.s3_key = f"{user_id}/test.mp3"
+    mock_doc.file_size = 1000
+    mock_doc.status = "processing"
+    mock_doc.user_id = user_id
+    mock_doc.created_at = now
+    mock_doc.updated_at = now
+
+    service.document_repo.create.return_value = mock_doc
+
+    # Mock asyncio.create_task and internal _process_media
+    monkeypatch.setattr("asyncio.create_task", MagicMock())
+
+    res = await service.upload_document(
+        file_path="dummy/path.mp3",
+        filename="test.mp3",
+        file_size=1000,
+        file_type="audio",
+        user_id=user_id,
+    )
+
+    assert res.file_type == "audio"
+
+
+@pytest.mark.asyncio
+async def test_delete_document_s3_error(service, monkeypatch):
+    doc_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+
+    mock_doc = MagicMock()
+    mock_doc.s3_key = "key"
+    mock_doc.file_type = "pdf"
+    service.document_repo.get_by_id.return_value = mock_doc
+
+    mock_s3 = AsyncMock()
+    mock_s3.delete_file.side_effect = Exception("S3 error")
+    monkeypatch.setattr("backend.modules.document.document_service.s3_service", mock_s3)
+
+    # Should not raise exception
+    await service.delete_document(doc_id, user_id)
+    assert service.document_repo.delete.called
+
+
+@pytest.mark.asyncio
+async def test_delete_document_media(service, monkeypatch):
+    doc_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+
+    mock_doc = MagicMock()
+    mock_doc.s3_key = "key"
+    mock_doc.file_type = "audio"
+    service.document_repo.get_by_id.return_value = mock_doc
+
+    monkeypatch.setattr(
+        "backend.modules.document.document_service.s3_service", AsyncMock()
+    )
+
+    with patch(
+        "backend.modules.media.media_repository.TranscriptRepository"
+    ) as mock_t_repo, patch(
+        "backend.modules.media.media_repository.TranscriptSegmentRepository"
+    ) as mock_s_repo:
+
+        mock_transcript = MagicMock()
+        mock_transcript.id = "t1"
+        mock_t_repo.return_value.get_by_document.return_value = mock_transcript
+
+        await service.delete_document(doc_id, user_id)
+
+        assert mock_s_repo.return_value.delete_by_transcript.called
+        assert mock_t_repo.return_value.delete.called
+
+
+@pytest.mark.asyncio
+async def test_reprocess_media_success(service, monkeypatch):
+    doc_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+
+    now = datetime.now()
+    mock_doc = MagicMock()
+    mock_doc.id = doc_id
+    mock_doc.title = "test.mp3"
+    mock_doc.file_type = "audio"
+    mock_doc.s3_key = "key"
+    mock_doc.file_size = 1000
+    mock_doc.status = "processing"
+    mock_doc.user_id = user_id
+    mock_doc.created_at = now
+    mock_doc.updated_at = now
+    service.document_repo.get_by_id.return_value = mock_doc
+
+    monkeypatch.setattr(
+        "backend.modules.document.document_service.s3_service", AsyncMock()
+    )
+    monkeypatch.setattr("tempfile.mktemp", MagicMock(return_value="temp.mp3"))
+    monkeypatch.setattr("os.path.exists", MagicMock(return_value=True))
+    monkeypatch.setattr("os.remove", MagicMock())
+
+    with patch(
+        "backend.modules.document.document_service.MediaService"
+    ) as mock_media_service:
+        mock_media_service_instance = AsyncMock()
+        mock_media_service.return_value = mock_media_service_instance
+
+        res = await service.reprocess_media_document(doc_id, user_id)
+
+        assert str(res.id) == doc_id
+        assert service.document_repo.update_status.called
+
+
 def test_get_document_chunks_not_found(service):
     service.document_repo.get_by_id.return_value = None
     with pytest.raises(HTTPException) as excinfo:

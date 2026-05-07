@@ -87,3 +87,36 @@ def test_get_transcript_segments_not_found(service):
     with pytest.raises(HTTPException) as excinfo:
         service.get_transcript_segments(str(uuid.uuid4()))
     assert excinfo.value.status_code == 404
+
+
+def test_get_transcript_segments_with_range(service):
+    doc_id = str(uuid.uuid4())
+    t_id = str(uuid.uuid4())
+    mock_transcript = MagicMock()
+    mock_transcript.id = t_id
+    service.transcript_repo.get_by_document.return_value = mock_transcript
+
+    mock_segment = MagicMock(spec=TranscriptSegment)
+    mock_segment.id = str(uuid.uuid4())
+    mock_segment.transcript_id = t_id
+    mock_segment.content = "content"
+    mock_segment.start_time = 1.0
+    mock_segment.end_time = 2.0
+    mock_segment.created_at = datetime.now()
+
+    service.segment_repo.get_by_time_range.return_value = [mock_segment]
+
+    res = service.get_transcript_segments(doc_id, start_time=0.0, end_time=5.0)
+    assert len(res) == 1
+    assert service.segment_repo.get_by_time_range.called
+
+
+def test_delete_transcript(service):
+    doc_id = str(uuid.uuid4())
+    mock_transcript = MagicMock()
+    mock_transcript.id = str(uuid.uuid4())
+    service.transcript_repo.get_by_document.return_value = mock_transcript
+
+    service.delete_transcript(doc_id)
+    assert service.segment_repo.delete_by_transcript.called
+    assert service.transcript_repo.delete.called
