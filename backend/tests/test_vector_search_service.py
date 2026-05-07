@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from backend.modules.vector_search.vector_search_service import VectorSearchService
-import numpy as np
 import os
 import uuid
 import pickle
