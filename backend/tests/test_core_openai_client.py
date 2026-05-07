@@ -31,7 +31,7 @@ async def test_generate_embedding_success():
     mock_model = MagicMock()
     # Mock encode to return a numpy array
     mock_model.encode.return_value = np.array([0.1, 0.2])
-    
+
     with patch("backend.core.openai_client.local_embedding_model", mock_model):
         service = OpenAIService(None)
         res = await service.generate_embedding("test")
@@ -51,7 +51,7 @@ async def test_generate_embeddings_batch_no_model():
 async def test_generate_embeddings_batch_success():
     mock_model = MagicMock()
     mock_model.encode.return_value = np.array([[0.1, 0.2], [0.3, 0.4]])
-    
+
     with patch("backend.core.openai_client.local_embedding_model", mock_model):
         service = OpenAIService(None)
         res = await service.generate_embeddings_batch(["test1", "test2"])

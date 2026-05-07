@@ -90,6 +90,10 @@ async def call_with_branches(func, is_async):
 async def execute_callables(module):
     try:
         for name, obj in inspect.getmembers(module):
+            # Skip pytest fixtures to avoid direct call errors
+            if hasattr(obj, "_pytestfixturefunction"):
+                continue
+
             if inspect.isfunction(obj) or inspect.isroutine(obj):
                 await call_with_branches(obj, asyncio.iscoroutinefunction(obj))
             elif inspect.isclass(obj) and getattr(obj, "__module__", "") == getattr(

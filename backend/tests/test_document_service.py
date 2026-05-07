@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 from fastapi import HTTPException
 from backend.modules.document.document_service import DocumentService
-from backend.modules.document.document_models import Document
 from datetime import datetime
 import os
 import uuid
@@ -29,7 +28,7 @@ async def test_upload_document_success(service, monkeypatch):
     now = datetime.now()
     doc_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
-    
+
     mock_doc = MagicMock()
     mock_doc.id = doc_id
     mock_doc.title = "test.pdf"
@@ -40,7 +39,7 @@ async def test_upload_document_success(service, monkeypatch):
     mock_doc.user_id = user_id
     mock_doc.created_at = now
     mock_doc.updated_at = now
-    
+
     service.document_repo.create.return_value = mock_doc
 
     # Mock _process_pdf
