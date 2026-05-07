@@ -53,6 +53,7 @@
 - Intelligent Context Retrieval (RAG)
 - Automated Document Summarization
 - Streaming AI responses for real-time interaction
+- **Token Safety Guards**: Auto-truncation of messages, context, and history to stay within LLM provider limits
 
 </td>
 <td width="50%">
@@ -167,6 +168,20 @@ npm run dev
     <img src="https://img.shields.io/badge/LinkedIn-Sudheer_Konduboina-blue?style=flat-square&logo=linkedin" alt="LinkedIn" />
   </a>
 </div>
+
+---
+
+## ⚠️ Groq Tier & Token Limits
+
+This project uses **Groq** as the default LLM provider (`llama-3.3-70b-versatile`). The `on_demand` service tier has a **12,000 token-per-minute (TPM)** limit per request.
+
+To handle large documents and pasted content safely, the backend applies automatic safeguards:
+- **Per-message limit**: 1,500 characters (history messages)
+- **Context limit**: 2,500 characters (retrieved document chunks)
+- **History window**: Last 8 messages only
+- **Pre-send token guard**: Drops older history and truncates context if the estimate exceeds 10,000 tokens
+
+> **Tip**: If you frequently process very large PDFs, consider upgrading to the [Groq Dev Tier](https://console.groq.com/settings/billing) for higher TPM limits, or switch to a model/provider with a larger context window via the `MODEL_NAME` and `XAI_BASE_URL` environment variables.
 
 ---
 
