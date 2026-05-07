@@ -5,8 +5,8 @@ from fastapi.testclient import TestClient
 import asyncio
 import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 # Setup env variables before anything else
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["SECRET_KEY"] = "test-secret"
@@ -22,6 +22,7 @@ except ImportError:
     except ImportError:
         app = MagicMock()
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     try:
@@ -31,15 +32,19 @@ def event_loop():
     yield loop
     loop.close()
 
+
 @pytest.fixture
 def client():
     return TestClient(app)
+
 
 @pytest.fixture
 def mock_db():
     return MagicMock()
 
+
 @pytest.fixture
 def async_client():
     from httpx import AsyncClient
+
     return AsyncClient(app=app, base_url="http://test")

@@ -3,9 +3,10 @@ from sqlalchemy.sql import func
 import uuid
 from backend.database import Base
 
+
 class PlaybackSession(Base):
     __tablename__ = "playback_sessions"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, nullable=False)
     document_id = Column(String, nullable=False)

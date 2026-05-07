@@ -7,7 +7,9 @@ from backend.config.settings import settings
 security = HTTPBearer()
 
 
-async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+async def get_current_user_id(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> str:
     """Get current user ID from JWT token."""
     token = credentials.credentials
     payload = decode_access_token(token)
@@ -27,7 +29,11 @@ async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depend
     return user_id
 
 
-async def get_optional_user_id(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))) -> Optional[str]:
+async def get_optional_user_id(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+        HTTPBearer(auto_error=False)
+    ),
+) -> Optional[str]:
     """Get optional user ID from JWT token (for public endpoints)."""
     if credentials is None:
         return None

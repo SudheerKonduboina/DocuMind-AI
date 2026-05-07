@@ -10,7 +10,7 @@ from backend.core.middleware import RequestIDMiddleware
 from backend.core.exception_handlers import (
     http_exception_handler,
     validation_exception_handler,
-    generic_exception_handler
+    generic_exception_handler,
 )
 from fastapi.exceptions import RequestValidationError
 from backend.core.health import router as health_router
@@ -35,24 +35,26 @@ async def lifespan(app: FastAPI):
         # Test database connection
         with engine.connect():
             logger.info("Database connection successful")
-        
+
         # Initialize tables
         init_db()
         logger.info("Database tables initialized")
-        
+
         # Test Redis connection
         try:
             redis_client.ping()
             logger.info("Redis connection successful")
         except Exception as e:
-            logger.warning(f"Redis connection failed: {e}. Rate limiting and caching will be disabled.")
-        
+            logger.warning(
+                f"Redis connection failed: {e}. Rate limiting and caching will be disabled."
+            )
+
     except Exception as e:
         logger.error(f"Startup error: {e}")
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down AI Document Q&A API")
 
@@ -61,7 +63,7 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="AI-Powered Document & Multimedia Q&A API",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -89,25 +91,22 @@ async def health_check():
         # Check database
         with engine.connect():
             db_status = "connected"
-        
+
         # Check Redis
         try:
             redis_client.ping()
             redis_status = "connected"
         except Exception:
             redis_status = "disconnected"
-        
+
         return {
             "status": "healthy",
             "database": db_status,
             "redis": redis_status,
-            "version": settings.APP_VERSION
+            "version": settings.APP_VERSION,
         }
     except Exception as e:
-        return {
-            "status": "unhealthy",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "error": str(e)}
 
 
 # Include routers
@@ -119,14 +118,14 @@ app.include_router(media_router, prefix="/media", tags=["media"])
 app.include_router(chatbot_router, prefix="/chats", tags=["chats"])
 app.include_router(summarization_router, prefix="/summaries", tags=["summaries"])
 app.include_router(playback_router, prefix="/playback", tags=["playback"])
-app.include_router(vector_search_router, prefix="/vector-search", tags=["vector-search"])
+app.include_router(
+    vector_search_router, prefix="/vector-search", tags=["vector-search"]
+)
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
-        "main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG
+        "main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG
     )
