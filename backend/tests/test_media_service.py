@@ -35,7 +35,7 @@ async def test_transcribe_media_success(service, monkeypatch):
     now = datetime.now()
     t_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
-    
+
     mock_transcript = MagicMock(spec=Transcript)
     mock_transcript.id = t_id
     mock_transcript.document_id = doc_id
@@ -44,7 +44,7 @@ async def test_transcribe_media_success(service, monkeypatch):
     mock_transcript.duration_seconds = 1
     mock_transcript.created_at = now
     mock_transcript.updated_at = now
-    
+
     service.transcript_repo.create.return_value = mock_transcript
 
     mock_segment = MagicMock(spec=TranscriptSegment)
@@ -54,7 +54,7 @@ async def test_transcribe_media_success(service, monkeypatch):
     mock_segment.start_time = 0.0
     mock_segment.end_time = 1.0
     mock_segment.created_at = now
-    
+
     service.segment_repo.create.return_value = mock_segment
 
     res = await service.transcribe_media("dummy.mp4", doc_id)

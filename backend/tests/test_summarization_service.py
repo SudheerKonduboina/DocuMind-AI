@@ -30,7 +30,7 @@ async def test_generate_summary_cached_auto(service):
     s_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
-    
+
     mock_summary = MagicMock(spec=Summary)
     mock_summary.id = s_id
     mock_summary.document_id = doc_id
@@ -39,7 +39,7 @@ async def test_generate_summary_cached_auto(service):
     mock_summary.summary_type = "auto"
     mock_summary.created_at = now
     mock_summary.updated_at = now
-    
+
     service.summary_repo.create.return_value = mock_summary
 
     res = await service.generate_summary(doc_id, user_id, summary_type="auto")
@@ -82,7 +82,7 @@ async def test_generate_summary_success_existing(service, monkeypatch):
     s_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
-    
+
     existing_summary = MagicMock(spec=Summary)
     existing_summary.id = s_id
     existing_summary.document_id = doc_id
@@ -91,7 +91,7 @@ async def test_generate_summary_success_existing(service, monkeypatch):
     existing_summary.summary_type = "auto"
     existing_summary.created_at = now
     existing_summary.updated_at = now
-    
+
     service.summary_repo.get_by_document.return_value = existing_summary
 
     updated_summary = MagicMock(spec=Summary)
@@ -102,7 +102,7 @@ async def test_generate_summary_success_existing(service, monkeypatch):
     updated_summary.summary_type = "auto"
     updated_summary.created_at = now
     updated_summary.updated_at = now
-    
+
     service.summary_repo.update.return_value = updated_summary
 
     res = await service.generate_summary(doc_id, user_id)
@@ -133,7 +133,7 @@ async def test_generate_summary_success_new(service, monkeypatch):
     s_id = str(uuid.uuid4())
     doc_id = str(uuid.uuid4())
     user_id = str(uuid.uuid4())
-    
+
     new_summary = MagicMock(spec=Summary)
     new_summary.id = s_id
     new_summary.document_id = doc_id
@@ -142,7 +142,7 @@ async def test_generate_summary_success_new(service, monkeypatch):
     new_summary.summary_type = "auto"
     new_summary.created_at = now
     new_summary.updated_at = now
-    
+
     service.summary_repo.create.return_value = new_summary
 
     res = await service.generate_summary(doc_id, user_id)

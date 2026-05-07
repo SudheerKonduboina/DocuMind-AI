@@ -48,7 +48,9 @@ async def test_send_message_chat_not_found(service):
     service.chat_repo.get_by_id.return_value = None
 
     with pytest.raises(HTTPException) as excinfo:
-        async for _ in service.send_message(str(uuid.uuid4()), "hello", str(uuid.uuid4())):
+        async for _ in service.send_message(
+            str(uuid.uuid4()), "hello", str(uuid.uuid4())
+        ):
             pass
     assert excinfo.value.status_code == 404
 
@@ -62,7 +64,9 @@ async def test_send_message_cached(service):
     service.cache_service.get.return_value = json.dumps(cached_data)
 
     chunks = []
-    async for chunk in service.send_message(str(uuid.uuid4()), "hello", str(uuid.uuid4())):
+    async for chunk in service.send_message(
+        str(uuid.uuid4()), "hello", str(uuid.uuid4())
+    ):
         chunks.append(chunk)
 
     assert len(chunks) == 3  # 2 tokens + 1 done chunk
@@ -108,7 +112,9 @@ async def test_send_message_not_cached(service, monkeypatch):
     )
 
     chunks = []
-    async for chunk in service.send_message(str(uuid.uuid4()), "hello", str(uuid.uuid4())):
+    async for chunk in service.send_message(
+        str(uuid.uuid4()), "hello", str(uuid.uuid4())
+    ):
         chunks.append(chunk)
 
     assert len(chunks) == 2  # 1 content chunk + 1 done chunk
@@ -120,11 +126,15 @@ async def test_send_message_not_cached(service, monkeypatch):
 @pytest.mark.asyncio
 async def test_retrieve_context_no_results(service, mock_db):
     # Mocking DB query return empty list
-    mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = []
+    mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = (
+        []
+    )
     # Mock for document file type check
     mock_db.query.return_value.filter.return_value.first.return_value = None
 
-    context, ts, doc = await service._retrieve_context(str(uuid.uuid4()), "query", str(uuid.uuid4()))
+    context, ts, doc = await service._retrieve_context(
+        str(uuid.uuid4()), "query", str(uuid.uuid4())
+    )
     assert context == ""
     assert ts is None
     assert doc is None
@@ -138,14 +148,18 @@ async def test_retrieve_context_with_results(service, mock_db):
     mock_chunk.chunk_index = 0
 
     # Mocking DB query return list with chunk
-    mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [mock_chunk]
+    mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [
+        mock_chunk
+    ]
     # Mock for document file type check (PDF)
     mock_doc = MagicMock()
     mock_doc.file_type = "pdf"
     mock_db.query.return_value.filter.return_value.first.return_value = mock_doc
 
     doc_id = str(uuid.uuid4())
-    context, ts, doc = await service._retrieve_context(doc_id, "query", str(uuid.uuid4()))
+    context, ts, doc = await service._retrieve_context(
+        doc_id, "query", str(uuid.uuid4())
+    )
     assert context == "chunk content"
     assert ts is None
     assert doc == doc_id
