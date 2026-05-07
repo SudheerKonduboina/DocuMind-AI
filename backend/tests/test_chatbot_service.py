@@ -1,8 +1,7 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 from fastapi import HTTPException
 from backend.modules.chatbot.chatbot_service import ChatbotService
-from backend.modules.chatbot.chatbot_schemas import ChatCreate
 import json
 
 @pytest.fixture

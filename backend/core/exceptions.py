@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from typing import Optional, Any
+from typing import Optional
 
 
 class BaseApplicationException(Exception):

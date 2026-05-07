@@ -1,9 +1,7 @@
 from sqlalchemy.orm import Session
-from typing import Optional
 from datetime import timedelta
 from backend.modules.auth.auth_repository import UserRepository
 from backend.modules.auth.auth_schemas import UserCreate, UserLogin, UserResponse, TokenResponse
-from backend.modules.auth.auth_models import User
 from backend.core.security import verify_password, create_access_token
 from backend.config.settings import settings
 from fastapi import HTTPException, status

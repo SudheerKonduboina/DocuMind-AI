@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from typing import Optional
 from backend.modules.playback.playback_schemas import PlaybackSegmentRequest, PlaybackSegmentResponse
 from backend.modules.media.media_repository import TranscriptRepository, TranscriptSegmentRepository
 from backend.modules.document.document_repository import DocumentRepository

@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, mock_open, patch
-import os
 import importlib
 import backend.core.openai_client
 from backend.core.openai_client import OpenAIService

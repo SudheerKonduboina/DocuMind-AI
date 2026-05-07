@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
-from fastapi import FastAPI, Request, Response, APIRouter
+from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

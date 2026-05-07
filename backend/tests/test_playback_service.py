@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 from fastapi import HTTPException
 from backend.modules.playback.playback_service import PlaybackService
 from backend.modules.playback.playback_schemas import PlaybackSegmentRequest

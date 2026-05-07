@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 from fastapi import HTTPException
 from backend.modules.summarization.summarization_service import SummarizationService
 from backend.modules.summarization.summarization_models import Summary

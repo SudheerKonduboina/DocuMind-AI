@@ -1,6 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-import os
+from unittest.mock import AsyncMock, MagicMock
 import importlib
 import backend.core.llm
 

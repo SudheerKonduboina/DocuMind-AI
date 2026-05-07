@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 from fastapi import HTTPException
 from backend.modules.media.media_service import MediaService
 from backend.modules.media.media_models import Transcript, TranscriptSegment

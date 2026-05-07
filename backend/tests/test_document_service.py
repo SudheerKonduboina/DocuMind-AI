@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 from fastapi import HTTPException
 from backend.modules.document.document_service import DocumentService
-from backend.modules.document.document_models import Document, DocumentChunk
+from backend.modules.document.document_models import Document
 import os
 
 @pytest.fixture

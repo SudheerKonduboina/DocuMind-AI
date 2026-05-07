@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Optional
-import json
 from backend.modules.chatbot.chatbot_schemas import (
     ChatCreate,
     ChatResponse,
     ChatListResponse,
-    MessageCreate,
     MessageRequest,
     MessageListResponse
 )

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from backend.modules.summarization.summarization_schemas import SummaryResponse
 from backend.modules.summarization.summarization_service import SummarizationService

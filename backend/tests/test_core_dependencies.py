@@ -5,7 +5,6 @@ from backend.core.dependencies import get_current_user_id, get_optional_user_id,
 
 @pytest.mark.asyncio
 async def test_get_current_user_id_success(monkeypatch):
-    from backend.core.dependencies import get_current_user_id
     
     def mock_decode(token):
         return {"sub": "user123"}
@@ -18,7 +17,6 @@ async def test_get_current_user_id_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_current_user_id_no_sub(monkeypatch):
-    from backend.core.dependencies import get_current_user_id
     
     def mock_decode(token):
         return {"other": "value"} # missing "sub"
@@ -34,7 +32,6 @@ async def test_get_current_user_id_no_sub(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_current_user_id_invalid_token(monkeypatch):
-    from backend.core.dependencies import get_current_user_id
     
     def mock_decode(token):
         return None
@@ -50,7 +47,6 @@ async def test_get_current_user_id_invalid_token(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_optional_user_id_success(monkeypatch):
-    from backend.core.dependencies import get_optional_user_id
     
     def mock_decode(token):
         return {"sub": "user123"}
@@ -63,14 +59,12 @@ async def test_get_optional_user_id_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_optional_user_id_no_credentials():
-    from backend.core.dependencies import get_optional_user_id
     
     user_id = await get_optional_user_id(None)
     assert user_id is None
 
 @pytest.mark.asyncio
 async def test_get_optional_user_id_invalid_token(monkeypatch):
-    from backend.core.dependencies import get_optional_user_id
     
     def mock_decode(token):
         return None
@@ -82,6 +76,5 @@ async def test_get_optional_user_id_invalid_token(monkeypatch):
     assert user_id is None
 
 def test_get_settings():
-    from backend.core.dependencies import get_settings
     settings = get_settings()
     assert settings is not None

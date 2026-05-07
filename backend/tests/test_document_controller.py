@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException, UploadFile
 from backend.modules.document.document_controller import DocumentController
 from backend.config.settings import settings

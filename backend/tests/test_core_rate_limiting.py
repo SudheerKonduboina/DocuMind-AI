@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import Request, HTTPException, status
 from fastapi.responses import Response
 from backend.core.rate_limiting import rate_limit_middleware
@@ -76,7 +76,7 @@ async def test_rate_limit_user_id_unknown(mock_request, mock_call_next, monkeypa
     
     monkeypatch.setattr("backend.core.rate_limiting.RateLimiter", mock_rate_limiter_cls)
     
-    response = await rate_limit_middleware(mock_request, mock_call_next)
+    await rate_limit_middleware(mock_request, mock_call_next)
     
     mock_rate_limiter.is_allowed.assert_called_with("unknown", settings.RATE_LIMIT_REQUESTS, settings.RATE_LIMIT_PERIOD)
 

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import Optional
 from pydantic import BaseModel
 from backend.modules.vector_search.vector_search_service import VectorSearchService
 from backend.database import get_db

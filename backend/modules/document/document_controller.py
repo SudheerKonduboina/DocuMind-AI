@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import Optional
-from backend.modules.document.document_schemas import DocumentResponse, DocumentListResponse, DocumentUpdate
+from backend.modules.document.document_schemas import DocumentResponse, DocumentListResponse
 from backend.modules.document.document_service import DocumentService
 from backend.database import get_db
 from backend.core.dependencies import get_current_user_id, get_optional_user_id

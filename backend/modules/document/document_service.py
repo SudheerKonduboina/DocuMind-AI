@@ -2,10 +2,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import pypdf
 from backend.modules.document.document_repository import DocumentRepository, DocumentChunkRepository
-from backend.modules.document.document_schemas import DocumentCreate, DocumentUpdate, DocumentResponse, DocumentChunkCreate
-from backend.modules.document.document_models import Document
+from backend.modules.document.document_schemas import DocumentCreate, DocumentResponse, DocumentChunkCreate
 from backend.core.s3_client import s3_service
-from backend.core.openai_client import openai_service
 from fastapi import HTTPException, status
 import tempfile
 import os
@@ -233,7 +231,6 @@ class DocumentService:
             )
         
         # Download from S3 to local temp file
-        import tempfile
         temp_file_path = None
         try:
             temp_file_path = tempfile.mktemp(suffix=f".{document.file_type}")

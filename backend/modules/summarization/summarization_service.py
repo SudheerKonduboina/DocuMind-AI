@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from backend.modules.summarization.summarization_repository import SummaryRepository
 from backend.modules.summarization.summarization_schemas import SummaryCreate, SummaryResponse, SummaryUpdate
-from backend.modules.summarization.summarization_models import Summary
 from backend.modules.document.document_repository import DocumentChunkRepository
 from backend.modules.media.media_repository import TranscriptRepository
 from backend.core.openai_client import openai_service

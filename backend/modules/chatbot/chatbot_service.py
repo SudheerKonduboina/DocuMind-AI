@@ -5,12 +5,9 @@ from backend.modules.chatbot.chatbot_repository import ChatRepository, MessageRe
 from backend.modules.chatbot.chatbot_schemas import (
     ChatCreate,
     ChatResponse,
-    MessageCreate,
     MessageResponse,
     StreamChunk
 )
-from backend.modules.chatbot.chatbot_models import Chat
-from backend.modules.vector_search.vector_search_service import VectorSearchService
 from backend.modules.document.document_models import DocumentChunk
 from backend.modules.document.document_repository import DocumentChunkRepository
 from backend.modules.media.media_repository import TranscriptSegmentRepository

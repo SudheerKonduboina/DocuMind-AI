@@ -1,19 +1,14 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import json
 import whisper
 from backend.modules.media.media_repository import TranscriptRepository, TranscriptSegmentRepository
 from backend.modules.media.media_schemas import (
     TranscriptCreate,
-    TranscriptResponse,
     TranscriptSegmentCreate,
     TranscriptSegmentResponse,
     TranscriptWithSegmentsResponse
 )
-from backend.modules.media.media_models import Transcript
-from backend.core.openai_client import openai_service
 from fastapi import HTTPException, status
-import re
 from backend.core.logger import logger
 
 

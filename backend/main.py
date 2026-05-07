@@ -2,10 +2,26 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from backend.config.settings import settings
-from backend.database import Base, engine
+from backend.database import engine
 from backend.core.redis_client import redis_client
 from backend.core.logging import get_logger
 from backend.database.init_db import init_db
+from backend.core.middleware import RequestIDMiddleware
+from backend.core.exception_handlers import (
+    http_exception_handler,
+    validation_exception_handler,
+    generic_exception_handler
+)
+from fastapi.exceptions import RequestValidationError
+from backend.core.health import router as health_router
+from backend.core.metrics import router as metrics_router
+from backend.modules.auth import auth_router
+from backend.modules.document import document_router
+from backend.modules.media import media_router
+from backend.modules.chatbot import chatbot_router
+from backend.modules.summarization import summarization_router
+from backend.modules.playback import playback_router
+from backend.modules.vector_search import vector_search_router
 
 logger = get_logger(__name__)
 
@@ -17,7 +33,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up AI Document Q&A API")
     try:
         # Test database connection
-        with engine.connect() as conn:
+        with engine.connect():
             logger.info("Database connection successful")
         
         # Initialize tables
@@ -58,17 +74,9 @@ app.add_middleware(
 )
 
 # Request ID middleware
-from backend.core.middleware import RequestIDMiddleware
 app.add_middleware(RequestIDMiddleware)
 
 # Exception handlers
-from backend.core.exception_handlers import (
-    http_exception_handler,
-    validation_exception_handler,
-    generic_exception_handler
-)
-from fastapi.exceptions import RequestValidationError
-
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
@@ -79,7 +87,7 @@ async def health_check():
     """Health check endpoint."""
     try:
         # Check database
-        with engine.connect() as conn:
+        with engine.connect():
             db_status = "connected"
         
         # Check Redis
@@ -103,16 +111,6 @@ async def health_check():
 
 
 # Include routers
-from backend.core.health import router as health_router
-from backend.core.metrics import router as metrics_router
-from backend.modules.auth import auth_router
-from backend.modules.document import document_router
-from backend.modules.media import media_router
-from backend.modules.chatbot import chatbot_router
-from backend.modules.summarization import summarization_router
-from backend.modules.playback import playback_router
-from backend.modules.vector_search import vector_search_router
-
 app.include_router(health_router, tags=["health"])
 app.include_router(metrics_router, tags=["metrics"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])

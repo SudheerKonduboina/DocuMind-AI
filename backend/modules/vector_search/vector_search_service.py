@@ -138,9 +138,8 @@ class VectorSearchService:
     ) -> List[Tuple[str, float]]:
         """Filter results by user ID."""
         from backend.modules.document.document_models import DocumentChunk
-        from backend.modules.media.media_models import TranscriptSegment
         
-        chunk_ids = [r[0] for r in results]
+        [r[0] for r in results]
         
         # Query database to check ownership
         # This is a simplified check - in production you'd optimize this
@@ -153,7 +152,7 @@ class VectorSearchService:
             ).first()
             
             if chunk:
-                document = self.db.query(DocumentChunk.document_id).filter(
+                self.db.query(DocumentChunk.document_id).filter(
                     DocumentChunk.id == chunk_id
                 ).first()
                 # Would need to check document.user_id == user_id
