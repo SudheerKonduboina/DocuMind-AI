@@ -36,7 +36,7 @@ redis==5.0.1
 openai==1.10.0
 langchain==0.1.5
 langchain-openai==0.0.5
-llama-index>=0.10.0
+llama-index==0.10.18
 
 # ===============================
 # Vector Database
