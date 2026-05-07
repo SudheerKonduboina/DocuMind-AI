@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Enterprise CI/CD Pipeline
 
 on:
   push:
@@ -6,41 +6,42 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
 jobs:
-  backend-lint:
-    name: Backend Lint
+  backend-analysis:
+    name: Backend Lint & Security
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      
-      - name: Install dependencies
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Linting Tools
         run: |
           pip install --upgrade pip
           pip install ruff black mypy
-          pip install -r requirements.txt
-      
-      - name: Run Ruff
+
+      - name: Run Ruff (Linting)
         run: ruff check .
-        continue-on-error: true
-      
-      - name: Run Black
+
+      - name: Run Black (Formatting)
         run: black --check .
-        continue-on-error: true
-      
-      - name: Run MyPy
+
+      - name: Run MyPy (Type Checking)
         run: mypy . --ignore-missing-imports
-        continue-on-error: true
 
   backend-test:
-    name: Backend Tests
+    name: Backend Tests & Coverage
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -70,95 +71,124 @@ jobs:
           - 6379:6379
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
-      
+
       - name: Run tests with coverage
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_ai_doc_qa
           REDIS_URL: redis://localhost:6379/0
-          SECRET_KEY: test-secret-key
-          XAI_API_KEY: test-key
+          SECRET_KEY: ${{ secrets.SECRET_KEY || 'test-secret-key-123' }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY || 'test-key' }}
           MODEL_NAME: grok-2-latest
           XAI_BASE_URL: https://api.x.ai/v1
+          # Mock OpenAI/Other API keys for tests if needed
+          OPENAI_API_KEY: sk-test-123
         run: |
-          pytest --cov=. --cov-report=xml --cov-report=html --cov-report=term
-      
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          flags: backend
-          name: backend-coverage
+          pytest --cov=. --cov-report=xml --cov-report=term-missing
 
-  frontend-lint:
-    name: Frontend Lint
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  frontend-analysis:
+    name: Frontend Lint & Type Check
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Node.js
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
-        run: npm install
-      
-      - name: Run TypeScript check
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript Check
         run: npx tsc --noEmit
 
   frontend-test:
-    name: Frontend Tests
+    name: Frontend Tests & Coverage
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Node.js
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Run tests
-        run: npm run test -- --run
+          cache-dependency-path: frontend/package-lock.json
 
-  build:
-    name: Build Docker Images
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Vitest with Coverage
+        run: npm run test -- --coverage --run
+
+  build-verification:
+    name: Build Verification
     runs-on: ubuntu-latest
-    needs: [backend-lint, backend-test, frontend-lint, frontend-test]
+    needs: [backend-analysis, backend-test, frontend-analysis, frontend-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend (Dry Run)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: backend-verify:latest
+
+      - name: Build Frontend (Dry Run)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: frontend-verify:latest
+
+  production-release:
+    name: Push to Registry & Deploy
+    runs-on: ubuntu-latest
+    needs: [build-verification]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
+
       - name: Build and push backend
         uses: docker/build-push-action@v5
         with:
@@ -167,7 +197,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/ai-doc-qa-backend:latest
             ${{ secrets.DOCKER_USERNAME }}/ai-doc-qa-backend:${{ github.sha }}
-      
+
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
@@ -177,22 +207,14 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/ai-doc-qa-frontend:latest
             ${{ secrets.DOCKER_USERNAME }}/ai-doc-qa-frontend:${{ github.sha }}
 
-  deploy:
-    name: Deploy to AWS
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      
-      - name: Deploy to EC2
+
+      - name: Deploy to Production
         run: |
-          # Add deployment commands here
-          echo "Deploying to EC2 instance"
+          echo "Deploying version ${{ github.sha }} to production environment..."
+          # Add your actual deployment script/command here

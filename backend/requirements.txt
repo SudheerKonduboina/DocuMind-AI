@@ -36,12 +36,12 @@ redis==5.0.1
 openai==1.10.0
 langchain==0.1.5
 langchain-openai==0.0.5
-llama-index==0.9.12
+llama-index>=0.10.0
 
 # ===============================
 # Vector Database
 # ===============================
-faiss-cpu==1.10.0
+faiss-cpu==1.7.4
 sentence-transformers==2.3.1
 
 # ===============================
@@ -53,7 +53,6 @@ pypdf==3.17.4
 # Speech-to-Text (ASR)
 # ===============================
 openai-whisper==20231117
-whisper-openai==20231117
 
 # ===============================
 # Cloud Storage (AWS S3)
@@ -71,3 +70,6 @@ httpx==0.26.0
 pytest==7.4.4
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
+ruff==0.1.14
+black==24.1.1
+mypy==1.8.0
