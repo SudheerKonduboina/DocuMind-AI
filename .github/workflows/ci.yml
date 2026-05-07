@@ -180,18 +180,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-verification]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Login to Docker Hub
-        if: secrets.DOCKER_USERNAME != ''
+        if: env.DOCKER_USERNAME != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push backend
-        if: secrets.DOCKER_USERNAME != ''
+        if: env.DOCKER_USERNAME != ''
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -201,7 +204,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/ai-doc-qa-backend:${{ github.sha }}
 
       - name: Build and push frontend
-        if: secrets.DOCKER_USERNAME != ''
+        if: env.DOCKER_USERNAME != ''
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -211,7 +214,7 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/ai-doc-qa-frontend:${{ github.sha }}
 
       - name: Configure AWS credentials
-        if: secrets.AWS_ACCESS_KEY_ID != ''
+        if: env.AWS_ACCESS_KEY_ID != ''
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -219,7 +222,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Deploy to Production
-        if: secrets.AWS_ACCESS_KEY_ID != ''
+        if: env.AWS_ACCESS_KEY_ID != ''
         run: |
           echo "Deploying version ${{ github.sha }} to production environment..."
           # Add your actual deployment script/command here
