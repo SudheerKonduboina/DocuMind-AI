@@ -4,6 +4,7 @@ import pkgutil
 import importlib
 import inspect
 import asyncio
+from typing import Any, List
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -66,7 +67,7 @@ def safe_instantiate(class_obj):
 
 
 async def call_with_branches(func, is_async):
-    arg_options = [MagicMock(), None, {}, [], True, False]
+    arg_options: List[Any] = [MagicMock(), None, {}, [], True, False]
     try:
         sig = inspect.signature(func)
     except Exception:
