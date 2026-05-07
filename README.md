@@ -158,7 +158,7 @@ npm run dev
 
 <div align="center">
   <a href="https://www.linkedin.com/in/sudheerkonduboina/">
-    <img src="https://avatars.githubusercontent.com/u/placeholder" width="120" style="border-radius: 50%;" alt="Sudheer Konduboina" />
+    <img src="docs/screenshots/sudheer.png" width="120" style="border-radius: 50%;" alt="Sudheer Konduboina" />
   </a>
   <br/>
   <h3>Sudheer Konduboina</h3>

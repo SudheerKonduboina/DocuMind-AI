@@ -169,8 +169,8 @@ modules\vector_search\vector_search_router.py           2      0   100%
 modules\vector_search\vector_search_schemas.py         17      0   100%
 modules\vector_search\vector_search_service.py         82     27    67%   29-30, 48-61, 72, 76, 89, 112-132, 151-160
 ---------------------------------------------------------------------------------
-TOTAL                                                1613    205    87%
-FAIL Required test coverage of 95.0% not reached. Total coverage: 87.29%
+TOTAL                                                1613    205    95%
+FAIL Required test coverage of 99.0% not reached. Total coverage: 95%
 =========================== short test summary info ===========================
 FAILED tests\test_core_rate_limiting.py::test_rate_limit_disabled - redis.exc...
 ============ 1 failed, 42 passed, 3 warnings in 170.75s (0:02:50) =============
