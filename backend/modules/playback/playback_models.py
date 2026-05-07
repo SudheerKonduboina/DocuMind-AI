@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Float, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 import uuid
-from database import Base
+from backend.database import Base
 
 class PlaybackSession(Base):
     __tablename__ = "playback_sessions"

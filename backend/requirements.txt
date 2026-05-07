@@ -42,6 +42,7 @@ llama-index==0.9.12
 # Vector Database
 # ===============================
 faiss-cpu==1.7.4
+sentence-transformers==2.3.1
 
 # ===============================
 # Document Processing

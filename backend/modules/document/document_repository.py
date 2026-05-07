@@ -77,6 +77,17 @@ class DocumentRepository:
             self.db.commit()
             self.db.refresh(document)
         return document
+    
+    def get_by_id_for_reprocess(self, document_id: str) -> Optional[Document]:
+        """Get document by ID without user isolation (for reprocessing)."""
+        import uuid
+        try:
+            # Convert string to UUID for proper comparison
+            document_uuid = uuid.UUID(document_id)
+            return self.db.query(Document).filter(Document.id == document_uuid).first()
+        except (ValueError, AttributeError):
+            # If conversion fails, try direct string comparison
+            return self.db.query(Document).filter(Document.id == document_id).first()
 
 
 class DocumentChunkRepository:

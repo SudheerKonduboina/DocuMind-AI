@@ -3,7 +3,7 @@ from typing import Optional
 from backend.modules.playback.playback_schemas import PlaybackSegmentRequest, PlaybackSegmentResponse
 from backend.modules.media.media_repository import TranscriptRepository, TranscriptSegmentRepository
 from backend.modules.document.document_repository import DocumentRepository
-from core.s3_client import s3_service
+from backend.core.s3_client import s3_service
 from fastapi import HTTPException, status
 
 

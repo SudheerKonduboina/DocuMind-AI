@@ -12,7 +12,7 @@ class UserRepository:
     
     def create(self, user_data: UserCreate) -> User:
         """Create a new user."""
-        from core.security import get_password_hash
+        from backend.core.security import get_password_hash
         
         db_user = User(
             email=user_data.email,

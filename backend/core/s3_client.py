@@ -1,7 +1,7 @@
 import os
 import shutil
 from typing import Optional
-from config.settings import settings
+from backend.config.settings import settings
 import boto3
 
 # Initialize S3 client only if provider is s3

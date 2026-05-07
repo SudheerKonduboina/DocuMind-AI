@@ -33,6 +33,12 @@ class TranscriptRepository:
         """Get transcript by ID."""
         return self.db.query(Transcript).filter(Transcript.id == transcript_id).first()
     
+    def update(self, transcript: Transcript) -> Transcript:
+        """Update transcript."""
+        self.db.commit()
+        self.db.refresh(transcript)
+        return transcript
+    
     def delete(self, transcript: Transcript) -> None:
         """Delete transcript."""
         self.db.delete(transcript)

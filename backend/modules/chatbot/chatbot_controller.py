@@ -12,8 +12,8 @@ from backend.modules.chatbot.chatbot_schemas import (
     MessageListResponse
 )
 from backend.modules.chatbot.chatbot_service import ChatbotService
-from database import get_db
-from core.dependencies import get_current_user_id
+from backend.database import get_db
+from backend.core.dependencies import get_current_user_id
 
 
 class ChatbotController:

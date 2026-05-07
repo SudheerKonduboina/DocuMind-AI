@@ -1,7 +1,7 @@
 from fastapi import Request, HTTPException, status
-from core.redis_client import RateLimiter
-from core.redis_client import redis_client
-from config.settings import settings
+from backend.core.redis_client import RateLimiter
+from backend.core.redis_client import redis_client
+from backend.config.settings import settings
 
 
 async def rate_limit_middleware(request: Request, call_next):

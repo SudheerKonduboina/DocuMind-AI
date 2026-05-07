@@ -4,10 +4,10 @@ from backend.modules.summarization.summarization_schemas import SummaryCreate, S
 from backend.modules.summarization.summarization_models import Summary
 from backend.modules.document.document_repository import DocumentChunkRepository
 from backend.modules.media.media_repository import TranscriptRepository
-from core.openai_client import openai_service
-from core.redis_client import CacheService
+from backend.core.openai_client import openai_service
+from backend.core.redis_client import CacheService
 from fastapi import HTTPException, status
-from core.redis_client import redis_client
+from backend.core.redis_client import redis_client
 
 
 class SummarizationService:

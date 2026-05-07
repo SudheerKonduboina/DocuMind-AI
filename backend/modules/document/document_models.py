@@ -2,8 +2,8 @@ from sqlalchemy import Column, String, BigInteger, DateTime, ForeignKey, Integer
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import uuid
-from database import Base
-from database.types import GUID
+from backend.database import Base
+from backend.database.types import GUID
 
 
 class Document(Base):

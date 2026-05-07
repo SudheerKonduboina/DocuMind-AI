@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Boolean, DateTime
 from sqlalchemy.sql import func
 import uuid
-from database import Base
-from database.types import GUID
+from backend.database import Base
+from backend.database.types import GUID
 
 
 class User(Base):

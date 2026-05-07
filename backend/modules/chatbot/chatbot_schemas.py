@@ -51,11 +51,25 @@ class MessageResponse(MessageBase):
     """Schema for message response."""
     id: uuid.UUID
     chat_id: uuid.UUID
-    metadata: Optional[Any] = None
+    metadata: Optional[dict] = None
     created_at: datetime
     
     class Config:
         from_attributes = True
+        populate_by_name = True
+    
+    @classmethod
+    def from_orm(cls, obj):
+        """Custom from_orm to handle metadata field mapping."""
+        data = {
+            "id": obj.id,
+            "chat_id": obj.chat_id,
+            "role": obj.role,
+            "content": obj.content,
+            "metadata": getattr(obj, "message_metadata", None),
+            "created_at": obj.created_at
+        }
+        return cls(**data)
 
 
 class MessageListResponse(BaseModel):

@@ -2,8 +2,8 @@ import faiss
 import numpy as np
 from typing import List, Tuple, Optional
 from sqlalchemy.orm import Session
-from core.openai_client import openai_service
-from config.settings import settings
+from backend.core.openai_client import openai_service
+from backend.config.settings import settings
 import os
 import pickle
 

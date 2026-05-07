@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from backend.modules.auth.auth_schemas import UserCreate, UserLogin, UserResponse, TokenResponse
 from backend.modules.auth.auth_service import AuthService
-from database import get_db
-from core.dependencies import get_current_user_id
+from backend.database import get_db
+from backend.core.dependencies import get_current_user_id
 
 
 class AuthController:

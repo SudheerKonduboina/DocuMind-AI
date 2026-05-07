@@ -14,8 +14,8 @@ from backend.modules.vector_search.vector_search_service import VectorSearchServ
 from backend.modules.document.document_models import DocumentChunk
 from backend.modules.document.document_repository import DocumentChunkRepository
 from backend.modules.media.media_repository import TranscriptSegmentRepository
-from core.openai_client import openai_service
-from core.redis_client import CacheService, redis_client
+from backend.core.openai_client import openai_service
+from backend.core.redis_client import CacheService, redis_client
 from fastapi import HTTPException, status
 import json
 from backend.core.logger import logger
@@ -82,8 +82,13 @@ class ChatbotService:
             )
         
         messages = self.message_repo.get_by_chat(chat_id)
-        return [MessageResponse.model_validate(msg) for msg in messages]
+        return [MessageResponse.from_orm(msg) for msg in messages]
     
+    MAX_MESSAGE_LENGTH = 1500
+    MAX_CONTEXT_LENGTH = 2500
+    MAX_HISTORY_MESSAGES = 8
+    MAX_TOTAL_TOKENS_ESTIMATE = 10000
+
     async def send_message(
         self,
         chat_id: str,
@@ -109,7 +114,9 @@ class ChatbotService:
                 detail="Chat not found"
             )
         
-        # Save user message
+        # Truncate and save user message
+        if len(content) > self.MAX_MESSAGE_LENGTH * 2:
+            content = content[:self.MAX_MESSAGE_LENGTH * 2] + "\n...[message truncated]"
         self.message_repo.create_with_metadata(chat_id, "user", content)
         
         # Check cache
@@ -131,11 +138,15 @@ class ChatbotService:
             except Exception as e:
                 logger.warning(f"Failed to process cached response: {e}")
         
-        # Get chat history
+        # Get chat history (last N messages only)
         messages = self.message_repo.get_by_chat(chat_id)
+        recent_messages = messages[-self.MAX_HISTORY_MESSAGES:]
         history = [
-            {"role": msg.role, "content": msg.content}
-            for msg in messages
+            {
+                "role": msg.role,
+                "content": msg.content[:self.MAX_MESSAGE_LENGTH] + "...[truncated]" if len(msg.content) > self.MAX_MESSAGE_LENGTH else msg.content
+            }
+            for msg in recent_messages
         ]
         
         # Retrieve relevant context if document is linked
@@ -143,13 +154,29 @@ class ChatbotService:
         context_timestamp = None
         source_document = None
         if chat.document_id:
-            context, context_timestamp, source_document = await self._retrieve_context(chat.document_id, content)
+            context, context_timestamp, source_document = await self._retrieve_context(chat.document_id, content, user_id)
         
         # Build prompt with context
         system_prompt = self._build_system_prompt(context)
         
         # Prepare messages for LLM
         api_messages = [{"role": "system", "content": system_prompt}] + history
+
+        # Token safety guard — rough char-based estimate (1 token ≈ 3-4 chars)
+        total_chars = sum(len(m["content"]) for m in api_messages)
+        estimated_tokens = total_chars // 3
+        if estimated_tokens > self.MAX_TOTAL_TOKENS_ESTIMATE:
+            logger.warning(
+                f"Token estimate {estimated_tokens} exceeds limit {self.MAX_TOTAL_TOKENS_ESTIMATE}. "
+                "Truncating system prompt and dropping older history messages."
+            )
+            # Truncate system prompt first
+            system_content = api_messages[0]["content"]
+            max_system_chars = self.MAX_CONTEXT_LENGTH
+            api_messages[0]["content"] = system_content[:max_system_chars] + "\n...[truncated]"
+            # If still too large, drop history messages from the start
+            while len(api_messages) > 2 and sum(len(m["content"]) for m in api_messages) // 3 > self.MAX_TOTAL_TOKENS_ESTIMATE:
+                api_messages.pop(1)
         
         # Stream response from LLM
         full_response = ""
@@ -191,54 +218,62 @@ class ChatbotService:
         
         yield StreamChunk(token="", done=True)
     
-    async def _retrieve_context(self, document_id: str, query: str) -> tuple:
+    async def _retrieve_context(self, document_id: str, query: str, user_id: str) -> tuple:
         """
         Retrieve relevant context using vector search with timestamps.
         
         Args:
             document_id: Document ID
             query: User query
+            user_id: User ID for security check
         
         Returns:
             Tuple of (context string, timestamp, source_document)
         """
-        vector_service = VectorSearchService(self.db)
+        from backend.modules.document.document_models import Document
         
-        # Search for relevant chunks
-        results = await vector_service.search(query, top_k=5)
+        # Get document to check if it's a video/audio (with user isolation)
+        document = self.db.query(Document).filter(
+            Document.id == document_id,
+            Document.user_id == user_id
+        ).first()
         
-        if not results:
-            logger.info("Vector search returned no results. Falling back to initial document chunks.")
-            # Fallback: get first 5 chunks of the document
-            chunks = self.db.query(DocumentChunk).filter(
-                DocumentChunk.document_id == document_id
-            ).order_by(DocumentChunk.chunk_index).limit(5).all()
+        # For video/audio, retrieve transcript segments directly
+        if document and document.file_type in ["audio", "video"]:
+            from backend.modules.media.media_repository import TranscriptRepository, TranscriptSegmentRepository
+            transcript_repo = TranscriptRepository(self.db)
+            segment_repo = TranscriptSegmentRepository(self.db)
             
-            if not chunks:
-                return "", None, None
+            transcript = transcript_repo.get_by_document(document_id)
+            if transcript:
+                segments = segment_repo.get_by_transcript(transcript.id)
+                if segments:
+                    # Build context from all transcript segments
+                    context_parts = []
+                    for seg in segments:
+                        context_parts.append(f"[{seg.start_time:.1f}s] {seg.content}")
+                    
+                    context = "\n\n".join(context_parts)
+                    return context, segments[0].start_time if segments else None, str(document_id)
             
-            context = "\n\n".join([c.content for c in chunks])
-            return context, getattr(chunks[0], 'start_time', None), str(document_id)
+            # No transcript found
+            return "", None, None
         
-        # Retrieve chunk content
-        chunk_ids = [r[0] for r in results]
-        chunks = self.chunk_repo.get_by_ids(chunk_ids)
+        # For PDFs, retrieve chunks directly from database
+        chunks = self.db.query(DocumentChunk).filter(
+            DocumentChunk.document_id == document_id
+        ).order_by(DocumentChunk.chunk_index).limit(15).all()
         
-        # Build context and extract timestamp from best match
+        if not chunks:
+            return "", None, None
+        
+        # Build context from all chunks
         context_parts = []
-        best_timestamp = None
-        source_document = None
-        
         for chunk in chunks:
             context_parts.append(chunk.content)
-            # Use the first chunk's timestamp as the best match
-            if best_timestamp is None and hasattr(chunk, 'start_time'):
-                best_timestamp = chunk.start_time
-            if source_document is None and hasattr(chunk, 'document_id'):
-                source_document = str(chunk.document_id)
         
         context = "\n\n".join(context_parts)
-        return context, best_timestamp, source_document
+        return context, None, str(document_id)
     
     def _build_system_prompt(self, context: str) -> str:
         """Build system prompt with context."""
@@ -247,6 +282,8 @@ Use the provided context to answer questions accurately. If the context doesn't 
 When referring to specific parts of audio/video content, include timestamps in the format [timestamp]."""
         
         if context:
+            if len(context) > self.MAX_CONTEXT_LENGTH:
+                context = context[:self.MAX_CONTEXT_LENGTH] + "\n...[content truncated]"
             return f"{base_prompt}\n\nContext:\n{context}"
         
         return base_prompt

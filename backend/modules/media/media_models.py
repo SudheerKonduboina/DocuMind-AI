@@ -1,8 +1,8 @@
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Float
 from sqlalchemy.orm import relationship
 import uuid
-from database import Base
-from database.types import GUID
+from backend.database import Base
+from backend.database.types import GUID
 from sqlalchemy.sql import func
 
 

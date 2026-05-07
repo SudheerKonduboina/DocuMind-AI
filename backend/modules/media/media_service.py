@@ -11,7 +11,7 @@ from backend.modules.media.media_schemas import (
     TranscriptWithSegmentsResponse
 )
 from backend.modules.media.media_models import Transcript
-from core.openai_client import openai_service
+from backend.core.openai_client import openai_service
 from fastapi import HTTPException, status
 import re
 from backend.core.logger import logger

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 import time
-from config.settings import settings
+from backend.config.settings import settings
 
 router = APIRouter()
 

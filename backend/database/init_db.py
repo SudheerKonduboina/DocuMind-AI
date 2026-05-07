@@ -1,4 +1,4 @@
-from database import Base, engine
+from backend.database import Base, engine
 from backend.modules.auth.auth_models import User
 from backend.modules.document.document_models import Document, DocumentChunk
 from backend.modules.media.media_models import Transcript, TranscriptSegment

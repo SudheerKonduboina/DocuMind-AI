@@ -1,6 +1,6 @@
 import redis
 from typing import Optional
-from config.settings import settings
+from backend.config.settings import settings
 
 redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 

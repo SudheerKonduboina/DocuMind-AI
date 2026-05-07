@@ -4,11 +4,13 @@ import pypdf
 from backend.modules.document.document_repository import DocumentRepository, DocumentChunkRepository
 from backend.modules.document.document_schemas import DocumentCreate, DocumentUpdate, DocumentResponse, DocumentChunkCreate
 from backend.modules.document.document_models import Document
-from core.s3_client import s3_service
-from core.openai_client import openai_service
+from backend.core.s3_client import s3_service
+from backend.core.openai_client import openai_service
 from fastapi import HTTPException, status
 import tempfile
 import os
+import asyncio
+from backend.modules.media.media_service import MediaService
 
 
 class DocumentService:
@@ -59,9 +61,14 @@ class DocumentService:
         # Process document asynchronously
         if file_type == "pdf":
             await self._process_pdf(document.id, file_path)
-        
-        # Clean up local file
-        os.remove(file_path)
+            # Clean up local file after PDF processing
+            os.remove(file_path)
+        elif file_type in ["audio", "video"]:
+            # Trigger media transcription
+            media_service = MediaService(self.document_repo.db)
+            # Use background task to avoid blocking the upload response
+            # File cleanup happens inside _process_media after transcription
+            asyncio.create_task(self._process_media(media_service, document.id, file_path))
         
         return DocumentResponse.model_validate(document)
     
@@ -154,7 +161,7 @@ class DocumentService:
             "items": [DocumentResponse.model_validate(doc) for doc in documents]
         }
     
-    def delete_document(self, document_id: str, user_id: str) -> None:
+    async def delete_document(self, document_id: str, user_id: str) -> None:
         """Delete document and associated data."""
         document = self.document_repo.get_by_id(document_id, user_id)
         if not document:
@@ -163,12 +170,28 @@ class DocumentService:
                 detail="Document not found"
             )
         
-        # Delete from S3
-        import asyncio
-        asyncio.create_task(s3_service.delete_file(document.s3_key))
+        # Delete from S3/local storage
+        try:
+            await s3_service.delete_file(document.s3_key)
+        except Exception as e:
+            from backend.core.logger import logger
+            logger.error(f"Failed to delete file {document.s3_key}: {e}")
         
-        # Delete chunks
+        # Delete chunks (for PDFs)
         self.chunk_repo.delete_by_document(document_id)
+        
+        # Delete transcript and segments (for audio/video)
+        if document.file_type in ["audio", "video"]:
+            from backend.modules.media.media_repository import TranscriptRepository, TranscriptSegmentRepository
+            transcript_repo = TranscriptRepository(self.document_repo.db)
+            segment_repo = TranscriptSegmentRepository(self.document_repo.db)
+            
+            transcript = transcript_repo.get_by_document(document_id)
+            if transcript:
+                # Delete segments first
+                segment_repo.delete_by_transcript(transcript.id)
+                # Delete transcript
+                transcript_repo.delete(transcript)
         
         # Delete document
         self.document_repo.delete(document)
@@ -184,3 +207,81 @@ class DocumentService:
         
         chunks = self.chunk_repo.get_by_document(document_id)
         return [chunk.content for chunk in chunks]
+
+    async def reprocess_media_document(self, document_id: str, user_id: str) -> DocumentResponse:
+        """
+        Re-process a stuck audio/video document.
+        
+        Args:
+            document_id: Document ID
+            user_id: User ID
+        
+        Returns:
+            Updated document response
+        """
+        document = self.document_repo.get_by_id(document_id, user_id)
+        if not document:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found"
+            )
+        
+        if document.file_type not in ["audio", "video"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only audio/video documents can be reprocessed"
+            )
+        
+        # Download from S3 to local temp file
+        import tempfile
+        temp_file_path = None
+        try:
+            temp_file_path = tempfile.mktemp(suffix=f".{document.file_type}")
+            await s3_service.download_file(document.s3_key, temp_file_path)
+            
+            # Trigger transcription
+            media_service = MediaService(self.document_repo.db)
+            await media_service.transcribe_media(temp_file_path, document_id)
+            
+            # Update document status
+            self.document_repo.update_status(document_id, "completed")
+            
+        except Exception as e:
+            from backend.core.logger import logger
+            logger.error(f"Media reprocessing failed for {document_id}: {str(e)}")
+            self.document_repo.update_status(document_id, "failed")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Reprocessing failed: {str(e)}"
+            )
+        finally:
+            if temp_file_path and os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+        
+        return DocumentResponse.model_validate(document)
+    
+    async def _process_media(self, media_service: MediaService, document_id: str, file_path: str) -> None:
+        """
+        Process audio/video: transcribe using Whisper and update status.
+        
+        Args:
+            document_id: Document ID
+            file_path: Local file path
+        """
+        try:
+            # Transcribe media (this updates transcripts table)
+            await media_service.transcribe_media(file_path, document_id)
+            
+            # Update document status
+            self.document_repo.update_status(document_id, "completed")
+            
+            # Clean up local file after processing
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                
+        except Exception as e:
+            from backend.core.logger import logger
+            logger.error(f"Media processing failed for {document_id}: {str(e)}")
+            self.document_repo.update_status(document_id, "failed")
+            if os.path.exists(file_path):
+                os.remove(file_path)

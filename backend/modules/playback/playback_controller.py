@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from backend.modules.playback.playback_schemas import PlaybackSegmentRequest, PlaybackSegmentResponse
 from backend.modules.playback.playback_service import PlaybackService
-from database import get_db
-from core.dependencies import get_current_user_id
+from backend.database import get_db
+from backend.core.dependencies import get_current_user_id
 
 
 class PlaybackController:

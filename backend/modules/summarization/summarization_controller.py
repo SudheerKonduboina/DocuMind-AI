@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.modules.summarization.summarization_schemas import SummaryResponse
 from backend.modules.summarization.summarization_service import SummarizationService
-from database import get_db
-from core.dependencies import get_current_user_id
+from backend.database import get_db
+from backend.core.dependencies import get_current_user_id
 
 
 class SummarizationController:

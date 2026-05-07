@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from config.settings import settings
-from database import Base, engine
-from core.redis_client import redis_client
-from core.logging import get_logger
-from database.init_db import init_db
+from backend.config.settings import settings
+from backend.database import Base, engine
+from backend.core.redis_client import redis_client
+from backend.core.logging import get_logger
+from backend.database.init_db import init_db
 
 logger = get_logger(__name__)
 

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     
     # Database
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/ai_doc_qa"
+    DATABASE_URL: str = "sqlite:///c:/Users/kondu/CascadeProjects/ai-doc-qa-app/demo_v2.db"
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -52,8 +52,8 @@ class Settings(BaseSettings):
         return self.ALLOWED_FILE_TYPES.split(",")
     
     # Vector Search
-    FAISS_INDEX_PATH: str = "/app/data/faiss_index"
-    EMBEDDING_DIMENSION: int = 1536
+    FAISS_INDEX_PATH: str = "c:/Users/kondu/CascadeProjects/ai-doc-qa-app/data/faiss_index"
+    EMBEDDING_DIMENSION: int = 384
     TOP_K_RESULTS: int = 5
     
     # CORS

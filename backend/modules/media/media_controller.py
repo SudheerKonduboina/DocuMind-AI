@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from backend.modules.media.media_schemas import TranscriptWithSegmentsResponse, TranscriptSegmentResponse
 from backend.modules.media.media_service import MediaService
-from database import get_db
-from core.dependencies import get_current_user_id
+from backend.database import get_db
+from backend.core.dependencies import get_current_user_id
 
 
 class MediaController:

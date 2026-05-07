@@ -1,7 +1,7 @@
 import logging
 import sys
 from typing import Optional
-from config.settings import settings
+from backend.config.settings import settings
 
 
 class LoggerConfig:

@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from backend.modules.document.document_schemas import DocumentResponse, DocumentListResponse, DocumentUpdate
 from backend.modules.document.document_service import DocumentService
-from database import get_db
-from core.dependencies import get_current_user_id
-from config.settings import settings
+from backend.database import get_db
+from backend.core.dependencies import get_current_user_id, get_optional_user_id
+from backend.config.settings import settings
 import tempfile
 import os
 
@@ -23,6 +23,7 @@ class DocumentController:
         self.router.get("", response_model=DocumentListResponse)(self.list_documents)
         self.router.get("/{document_id}", response_model=DocumentResponse)(self.get_document)
         self.router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)(self.delete_document)
+        self.router.post("/{document_id}/reprocess", response_model=DocumentResponse)(self.reprocess_document)
     
     async def upload_document(
         self,
@@ -108,7 +109,7 @@ class DocumentController:
         service = DocumentService(db)
         return service.get_document(document_id, user_id)
     
-    def delete_document(
+    async def delete_document(
         self,
         document_id: str,
         user_id: str = Depends(get_current_user_id),
@@ -116,7 +117,29 @@ class DocumentController:
     ) -> None:
         """Delete a document."""
         service = DocumentService(db)
-        service.delete_document(document_id, user_id)
+        await service.delete_document(document_id, user_id)
+    
+    async def reprocess_document(
+        self,
+        document_id: str,
+        user_id: Optional[str] = Depends(get_optional_user_id),
+        db: Session = Depends(get_db)
+    ) -> DocumentResponse:
+        """Re-process a stuck audio/video document."""
+        # For reprocessing, if no user_id provided, use the document's owner
+        service = DocumentService(db)
+        if not user_id:
+            # Get document first to find owner
+            from backend.modules.document.document_repository import DocumentRepository
+            doc_repo = DocumentRepository(db)
+            document = doc_repo.get_by_id_for_reprocess(document_id)
+            if not document:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Document not found"
+                )
+            user_id = str(document.user_id)
+        return await service.reprocess_media_document(document_id, user_id)
 
 
 document_controller = DocumentController()

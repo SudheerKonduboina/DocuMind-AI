@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from backend.database.session import SessionLocal
 from backend.modules.auth.auth_models import User
-from core.security import get_password_hash
+from backend.core.security import get_password_hash
 
 def reset_password(email, password):
     db = SessionLocal()
