@@ -155,22 +155,6 @@ npm run dev
 
 ---
 
-## 👨‍💻 Developed by
-
-<div align="center">
-  <a href="https://www.linkedin.com/in/sudheerkonduboina/">
-    <img src="docs/screenshots/sudheer.png" width="120" style="border-radius: 50%;" alt="Sudheer Konduboina" />
-  </a>
-  <br/>
-  <h3>Sudheer Konduboina</h3>
-  <p>Software Engineer (Backend) & AI Specialist</p>
-  <a href="https://www.linkedin.com/in/sudheerkonduboina/">
-    <img src="https://img.shields.io/badge/LinkedIn-Sudheer_Konduboina-blue?style=flat-square&logo=linkedin" alt="LinkedIn" />
-  </a>
-</div>
-
----
-
 ## ⚠️ Groq Tier & Token Limits
 
 This project uses **Groq** as the default LLM provider (`llama-3.3-70b-versatile`). The `on_demand` service tier has a **12,000 token-per-minute (TPM)** limit per request.
@@ -188,3 +172,19 @@ To handle large documents and pasted content safely, the backend applies automat
 ## © Copyright Notice
 
 **© 2026 DocuMind AI. All Rights Reserved.**
+
+---
+
+## 👨‍💻 Developed by
+
+<div align="center">
+  <a href="https://www.linkedin.com/in/sudheerkonduboina/">
+    <img src="docs/screenshots/sudheer.png" width="120" style="border-radius: 50%;" alt="Sudheer Konduboina" />
+  </a>
+  <br/>
+  <h3>Sudheer Konduboina</h3>
+  <p>Software Engineer (Backend) & AI Specialist</p>
+  <a href="https://www.linkedin.com/in/sudheerkonduboina/">
+    <img src="https://img.shields.io/badge/LinkedIn-Sudheer_Konduboina-blue?style=flat-square&logo=linkedin" alt="LinkedIn" />
+  </a>
+</div>
